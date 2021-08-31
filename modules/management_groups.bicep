@@ -36,6 +36,7 @@ resource mg_prod_eastus 'Microsoft.Management/managementGroups@2021-04-01' = {
   }
 }
 
+
 output mg_prod_id string = mg_prod.id
 output mg_prod_eastus_id string = mg_prod_eastus.id
 output mg_non_prod_id string = mg_non_prod.id

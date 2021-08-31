@@ -9,8 +9,8 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2019-05-01' =
   }
 }
 
-var ACRPullRole = concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
-param AcrPull string = newGuid()
+var ACRPullRole = '/subscriptions/${ subscription().subscriptionId }/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d'
+param AcrPull string = guid(resourceGroup().id)
 resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
   name: AcrPull
   scope: containerRegistry
