@@ -1,12 +1,15 @@
 targetScope = 'subscription'
 
-param resource_group_name string
+param resourcePrefix string = 'rg'
+param environment string
+param location string
+param name string
+param tags object
+
 resource resource_group 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: resource_group_name
-  location: 'east us'
-  tags: {
-    location: 'east us'
-  }
+  name: '${resourcePrefix}-${name}-${environment}-${location}'
+  location: location
+  tags: tags
   properties: {
   }
 }

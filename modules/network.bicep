@@ -1,28 +1,51 @@
+param environment string
+param tags object
+param resourcePrefix string = 'vnet'
+param vNetSettings object = {
+  vnetPrefixes: [
+    {
+      name: 'vnet-prefix'
+      addressPrefix: '10.0.0.0/16'
+    }
+  ]
+  subnets: [
+    {
+      name: 'snet-aks'
+      addressPrefix: '10.0.0.0/24'
+    }
+    {
+      name: 'snet-appgw'
+      addressPrefix: '10.0.1.0/24'
+    }
+  ]
+}
+
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2021-02-01' = {
-  name: 'vnet-lab'
-  location: 'east us'
+  name: '${resourcePrefix}-${environment}-${resourceGroup().location}'
+  location: resourceGroup().location
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '10.0.0.0/16'
+        vNetSettings.vnetPrefixes[0].addressPrefix
       ]
     }
     subnets: [
       {
-        name: 'snet-aks'
+        name: vNetSettings.subnets[0].name
         properties: {
-          addressPrefix: '10.0.0.0/24'
+          addressPrefix: vNetSettings.subnets[0].addressPrefix
         }
       }
       {
-        name: 'snet-appgw'
+        name: vNetSettings.subnets[1].name
         properties: {
-          addressPrefix: '10.0.1.0/24'
+          addressPrefix: vNetSettings.subnets[1].addressPrefix
         }
       }
     ]
   }
+  tags: tags
 }
 
-output aks_node_subnet string = virtualNetwork.properties.subnets[0].id
-output appgw_subnet string = virtualNetwork.properties.subnets[1].id
+output aksNodeSubnet string = virtualNetwork.properties.subnets[0].id
+output appgwSubnet string = virtualNetwork.properties.subnets[1].id

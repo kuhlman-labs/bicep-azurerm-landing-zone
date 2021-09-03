@@ -1,47 +1,97 @@
+param environment string
+param tags object
+
+param random string = uniqueString(resourceGroup().id)
+param containerRegistryPrefix string = 'cr'
+param containerRegistrySKU string = 'Standard'
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2019-05-01' = {
-  name: 'craks'
+  name: '${containerRegistryPrefix}${random}'
   location: resourceGroup().location
   sku: {
-    name: 'Standard'
+    name: containerRegistrySKU
   }
   properties: {
     adminUserEnabled: true
   }
+  tags: tags
 }
 
-var ACRPullRole = '/subscriptions/${ subscription().subscriptionId }/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d'
-param AcrPull string = guid(resourceGroup().id)
+
+param acrPullName string = guid(resourceGroup().id)
+param acrPullRole string = '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/7f951dda-4ed3-4680-a7ca-43fe172d538d'
 resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2021-04-01-preview' = {
-  name: AcrPull
+  name: acrPullName
   scope: containerRegistry
   properties: {
-    roleDefinitionId: ACRPullRole
+    roleDefinitionId: acrPullRole
     principalId: aksCluster.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
+param logAnalyticsWorkspaceSKU string = 'free'
+param logAnalyticsWorkspacePrefix string = 'log-${aksClusterPrefix}'
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' = {
-  name: 'log-k8s'
+  name: '${logAnalyticsWorkspacePrefix}-${environment}-${resourceGroup().location}'
   location: resourceGroup().location
   properties: {
     sku: {
-      name: 'Free'
+      name: logAnalyticsWorkspaceSKU
     }
   }
 }
 
+param keyVaultPrefix string = 'kv-${aksClusterPrefix}'
+param keyVaultSKU string = 'standard'
+param keyVaultFamily string = 'A'
+resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = {
+  name: '${keyVaultPrefix}-${environment}-${resourceGroup().location}'
+  location: resourceGroup().location
+  properties: {
+    enabledForDeployment: true
+    enabledForTemplateDeployment: true
+    enabledForDiskEncryption: true
+    tenantId: subscription().tenantId
+    accessPolicies: [
+      {
+        tenantId: subscription().tenantId
+        objectId: aksCluster.properties.identityProfile.kubeletidentity.objectId
+        permissions: {
+          secrets: [
+            'list'
+            'get'
+          ]
+        }
+      }
+    ]
+    sku: {
+      name: keyVaultSKU
+      family: keyVaultFamily
+    }
+  }
+  tags: tags
+}
+
+
 @secure()
-@description('SSH key used for linux nodes')
-param ssh_public_key string
-@description('aks admin name')
-param k8s_admin_name string = 'aks_admin'
-@description('subnet that aks nodes should be in')
-param aks_node_subnet string
-param appgw_subnet string
+@description('ssh public key used for linux nodes')
+param sshPublicKey string
+@description('admin name for kubernetes cluster')
+param adminName string = 'aks_admin'
+@description('subnet for aks nodes')
+param aksClusterPrefix string = 'aks'
+param vmSize string = 'Standard_B2ms'
+param zones array = [
+  '1'
+  '2'
+  '3'
+]
+param aksNodeSubnet string
+param appgwSubnet string
+
 
 resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
-  name: 'aks-lab'
+  name: '${aksClusterPrefix}-${environment}-${resourceGroup().location}'
   location: resourceGroup().location
   identity: {
     type: 'SystemAssigned'
@@ -53,16 +103,12 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
       {
         name: 'systempool'
         count: 3
-        vmSize: 'Standard_B2ms'
+        vmSize: vmSize
         osType: 'Linux'
         mode: 'System'
-        availabilityZones: [
-          '1'
-          '2'
-          '3'
-        ]
+        availabilityZones: zones
         enableAutoScaling: true
-        vnetSubnetID: aks_node_subnet
+        vnetSubnetID: aksNodeSubnet
         minCount: 1
         maxCount: 3
         nodeTaints: [
@@ -71,11 +117,11 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
       }
     ]
     linuxProfile: {
-      adminUsername: k8s_admin_name
+      adminUsername: adminName
       ssh: {
         publicKeys: [
           {
-            keyData: ssh_public_key
+            keyData: sshPublicKey
           }
         ]
       }
@@ -93,7 +139,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
       ingressApplicationGateway:{
         enabled: true
         config: {
-          subnetID: appgw_subnet
+          subnetID: appgwSubnet
         }
       }
     }
@@ -109,20 +155,17 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2021-05-01' = {
     properties: {
       count: 3
       enableAutoScaling: true
-      minCount: 3
-      maxCount: 5
-      vnetSubnetID: aks_node_subnet
+      minCount: 1
+      maxCount: 3
+      vnetSubnetID: aksNodeSubnet
       osType: 'Linux'
-      vmSize: 'Standard_B2ms'
+      vmSize: vmSize
       mode: 'User'
       type: 'VirtualMachineScaleSets'
-      availabilityZones: [
-        '1'
-        '2'
-        '3'
-      ]      
+      availabilityZones: zones     
     }
   }
 }
 
-output aks_identity string = aksCluster.identity.principalId 
+output aksIdentity string = aksCluster.identity.principalId 
+output aksFQDN string = aksCluster.properties.azurePortalFQDN
