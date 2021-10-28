@@ -1,0 +1,26 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "sshPublicKey": {
+        "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCnsUtZbb7mBbGSCg09v3cDSqNaasqlYGc3z2hjf180dPQG3goHxMicFVf/P4XenLgW0bj21o4ddUBKjWDXYUY0X3JZ0tRyylRspiOf2I6WGjTZ0gYm8DbwjTqJVgzqQMbfKxVhlRQiK6d7+On3tFIVOughaktkx68hhGiUaET+AaF6wbNvHo1pw6pCh6f/Gz0vWearuVk83EafEDBzjdXmXkLuE+5e3S6NIXzfLbLgmWQY+jf/3VEYsOWTrYnDYofxaNMxrLhJwyeHMLJ9K9bqTttapWVh1vJhS8X6RJRXj8Ngp4jchuQmM1qk0HbUKYSM5JFg6n8H1xrd5RT83ZlZeDfXnWd9hySWZDU3iLog3dDmhbyaxpoysuSXzemM81A9cDst7NuGQ1KOliNznrRPg/R8sXNrvJ9W3OiBvdWPffuuBxnvlWFZBbFT1riJVLpOWs8J8w6U3snZPM1ksTdR8p5RNyTaWnH6begZEgNq/E3JJ9FkGOw26P8PQhw+f3s= brkuhlma@SurfaceBook2"
+      },
+      "subscriptionId": {
+        "value": "f43de08a-5e35-4ea9-8ca1-11fc231ace6a"
+      },
+      "environment": {
+          "value": "non-prod"
+      },
+      "location": {
+          "value": "eastus"
+      },
+      "aksAdminGroupObjectIDs": {
+          "value": [
+              "2a69bf09-ea86-4321-9aa6-d18d2e9e5c01"
+          ]
+      },
+      "rootManagementGroup": {
+          "value": "4f86b03e-3df6-4d41-b222-9582f9e231cb"
+      }
+    }
+  }
